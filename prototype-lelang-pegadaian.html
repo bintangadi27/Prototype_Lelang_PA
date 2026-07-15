@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototype — Sistem Lelang Pegadaian</title>
+<style>
+  :root{
+    --green-900:#0b3d2e;
+    --green-800:#0f5132;
+    --green-700:#146c43;
+    --green-600:#1a7a4c;
+    --green-100:#e6f4ec;
+    --green-50:#f3faf6;
+    --amber-600:#b8860b;
+    --amber-100:#fdf3dd;
+    --red-600:#c0392b;
+    --red-100:#fbe9e7;
+    --ink-900:#16211c;
+    --ink-600:#4c5a52;
+    --ink-400:#7c8a82;
+    --line:#dbe6df;
+    --card-bg:#ffffff;
+    --page-bg:#f2f5f2;
+    --radius:12px;
+    --shadow:0 1px 2px rgba(16,40,28,.06), 0 4px 14px rgba(16,40,28,.04);
+    --font-ui: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--page-bg);font-family:var(--font-ui);color:var(--ink-900);}
+  button{font-family:inherit;}
+
+  /* ===== Top shell ===== */
+  .app-shell{max-width:1400px;margin:0 auto;padding:0 0 60px;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;background:var(--card-bg);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:30px;height:30px;border-radius:50%;
+    background:conic-gradient(from 200deg, #8fc93a, #1a7a4c 55%, #0b3d2e);
+    flex:0 0 auto;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.1;}
+  .brand-text b{font-size:15px;color:var(--green-900);letter-spacing:.2px;}
+  .brand-text span{font-size:10px;color:var(--ink-400);}
+  .proto-badge{
+    font-size:11px;font-weight:600;color:var(--amber-600);background:var(--amber-100);
+    padding:3px 10px;border-radius:20px;border:1px solid #f0dca3;
+  }
+
+  .tabs{
+    display:flex;gap:6px;padding:10px 28px 0;background:var(--card-bg);
+    border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:59px;z-index:49;
+  }
+  .tab-btn{
+    appearance:none;border:none;background:transparent;cursor:pointer;
+    padding:12px 16px;font-size:13.5px;font-weight:600;color:var(--ink-400);
+    border-bottom:3px solid transparent;white-space:nowrap;transition:.15s;
+  }
+  .tab-btn:hover{color:var(--green-700);}
+  .tab-btn.active{color:var(--green-800);border-bottom-color:var(--green-700);}
+  .tab-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:50%;background:var(--green-100);color:var(--green-800);
+    font-size:10.5px;margin-right:6px;
+  }
+  .tab-btn.active .tab-num{background:var(--green-700);color:#fff;}
+
+  .page{display:none;padding:22px 28px 0;}
+  .page.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .page-head{margin-bottom:18px;}
+  .page-head h1{font-size:21px;margin:0 0 4px;color:var(--green-900);}
+  .page-head p{margin:0;font-size:13px;color:var(--ink-400);}
+
+  .grid-2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start;}
+  @media (max-width:980px){.grid-2{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:18px;
+  }
+  .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  .card-h h2{font-size:15.5px;margin:0;display:flex;align-items:center;gap:8px;color:var(--ink-900);}
+  .card-h p.sub{grid-column:1/-1;margin:2px 0 12px;font-size:12.5px;color:var(--ink-400);}
+  .step-badge{
+    width:24px;height:24px;border-radius:6px;background:var(--green-800);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  }
+
+  .btn{
+    border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;
+    font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-900);transition:.15s;
+  }
+  .btn:hover{border-color:var(--green-600);color:var(--green-700);}
+  .btn-primary{background:var(--green-800);border-color:var(--green-800);color:#fff;}
+  .btn-primary:hover{background:var(--green-700);color:#fff;}
+  .btn-sm{padding:5px 10px;font-size:11.5px;border-radius:6px;}
+  .btn-green{background:var(--green-800);border-color:var(--green-800);color:#fff;}
+  .btn-green:hover{background:var(--green-700);color:#fff;}
+  .btn-amber{background:#fff;border-color:#e8c66b;color:var(--amber-600);}
+  .btn-amber:hover{background:var(--amber-100);}
+  .btn-red{background:#fff;border-color:#e6b0aa;color:var(--red-600);}
+  .btn-red:hover{background:var(--red-100);}
+
+  /* filters */
+  .filters{display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:10px;margin:14px 0 12px;}
+  @media (max-width:980px){.filters{grid-template-columns:1fr 1fr;}}
+  .field label{display:block;font-size:11px;color:var(--ink-400);margin-bottom:4px;}
+  .field select,.field input{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;
+    background:#fff;color:var(--ink-900);
+  }
+  .field.search{position:relative;}
+  .field.search span{position:absolute;right:10px;top:32px;color:var(--ink-400);font-size:13px;}
+
+  .quickstatus{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px;}
+  .qs-btn{
+    border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;
+    font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-600);display:flex;gap:6px;align-items:center;
+  }
+  .qs-btn b{font-weight:700;}
+  .qs-btn.active{background:var(--green-800);border-color:var(--green-800);color:#fff;}
+
+  .lot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media (max-width:1180px){.lot-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:620px){.lot-grid{grid-template-columns:1fr;}}
+  .lot-card{
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;
+    display:flex;flex-direction:column;transition:.15s;
+  }
+  .lot-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+  .lot-card.hidden{display:none;}
+  .lot-media{
+    height:120px;display:flex;align-items:center;justify-content:center;font-size:46px;
+    background:linear-gradient(180deg,#f6f8f6,#eef3ef);position:relative;
+  }
+  .lot-status{
+    position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;
+  }
+  .st-siap{background:var(--green-100);color:var(--green-800);}
+  .st-validasi{background:var(--amber-100);color:var(--amber-600);}
+  .st-draft{background:#eef1ef;color:var(--ink-400);}
+  .st-published{background:#e3f0ff;color:#1c5da0;}
+  .lot-body{padding:12px 14px 14px;flex:1;display:flex;flex-direction:column;gap:6px;}
+  .lot-body h3{margin:0;font-size:13.5px;}
+  .lot-meta{font-size:11.5px;color:var(--ink-600);display:flex;justify-content:space-between;}
+  .lot-meta b{color:var(--ink-900);font-weight:600;}
+  .lot-link{margin-top:6px;font-size:12px;font-weight:700;color:var(--green-700);cursor:pointer;background:none;border:none;padding:0;text-align:left;}
+  .lot-link:hover{text-decoration:underline;}
+
+  .pager{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+  .pg-btn{
+    width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:#fff;
+    font-size:12px;cursor:pointer;color:var(--ink-600);display:flex;align-items:center;justify-content:center;
+  }
+  .pg-btn.active{background:var(--green-800);border-color:var(--green-800);color:#fff;}
+  .pg-dots{color:var(--ink-400);font-size:12px;}
+
+  .info-box{
+    display:flex;gap:10px;background:var(--green-50);border:1px solid var(--green-100);
+    border-radius:10px;padding:12px 14px;font-size:12px;color:var(--ink-600);margin-top:10px;
+  }
+
+  /* stat tiles */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  @media (max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-tile{
+    border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 16px;
+    display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:.15s;
+  }
+  .stat-tile:hover{box-shadow:var(--shadow);}
+  .stat-tile .lbl{font-size:11.5px;color:var(--ink-400);}
+  .stat-tile .val{font-size:24px;font-weight:700;color:var(--ink-900);display:flex;align-items:center;justify-content:space-between;}
+  .stat-tile .val i{font-size:20px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead th{
+    text-align:left;font-size:11px;color:var(--ink-400);text-transform:none;
+    border-bottom:1px solid var(--line);padding:8px 10px;background:var(--green-900);color:#e9f3ec;
+  }
+  thead th:first-child{border-top-left-radius:8px;}
+  thead th:last-child{border-top-right-radius:8px;}
+  tbody td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:hover{background:#f8faf8;}
+  .pill{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;}
+  .pill-green{background:var(--green-100);color:var(--green-800);}
+  .pill-amber{background:var(--amber-100);color:var(--amber-600);}
+  .pill-red{background:var(--red-100);color:var(--red-600);}
+  .pill-gray{background:#eef1ef;color:var(--ink-400);}
+  .sla-late{color:var(--red-600);font-weight:700;}
+  .sla-ok{color:var(--green-700);font-weight:700;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .link{color:#1c5da0;font-weight:600;cursor:pointer;}
+  .link:hover{text-decoration:underline;}
+
+  .checklist{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;}
+  @media (max-width:900px){.checklist{grid-template-columns:1fr;}}
+  .cl-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .cl-icon{width:30px;height:30px;border-radius:8px;background:var(--green-100);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto;}
+  .cl-txt b{font-size:12.5px;display:block;}
+  .cl-txt span{font-size:11.2px;color:var(--ink-400);}
+  .cl-status{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--green-700);display:flex;gap:5px;align-items:center;white-space:nowrap;}
+
+  .kontrol-strip{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:16px;background:#fff;border:1px solid var(--line);
+    border-radius:var(--radius);padding:20px 22px;margin-top:6px;box-shadow:var(--shadow);
+  }
+  @media (max-width:980px){.kontrol-strip{grid-template-columns:repeat(2,1fr);}}
+  .kt{display:flex;gap:10px;align-items:flex-start;}
+  .kt-icon{font-size:20px;flex:0 0 auto;}
+  .kt b{display:block;font-size:12.8px;margin-bottom:2px;}
+  .kt span{font-size:11.3px;color:var(--ink-400);}
+  .footer-note{
+    display:flex;align-items:center;gap:10px;background:var(--green-900);color:#dff2e6;font-size:12px;
+    padding:12px 18px;border-radius:10px;margin:18px 0 0;
+  }
+
+  /* live bidding specifics */
+  .honda-media{
+    height:210px;border-radius:10px;background:linear-gradient(160deg,#1c1c1c,#2e2e2e);
+    display:flex;align-items:center;justify-content:center;font-size:70px;margin-bottom:10px;color:#fff;
+  }
+  .thumb-row{display:flex;gap:8px;}
+  .thumb{
+    flex:1;height:52px;border-radius:8px;background:#eee;display:flex;align-items:center;justify-content:center;
+    font-size:20px;border:1px solid var(--line);cursor:pointer;
+  }
+  .thumb.active{border-color:var(--green-700);}
+  .spec-grid{display:grid;grid-template-columns:1fr;gap:0;font-size:12.5px;margin-top:10px;}
+  .spec-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .spec-row span:first-child{color:var(--ink-400);}
+  .spec-row span:last-child{font-weight:600;}
+
+  .bid-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+  .bid-tile{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
+  .bid-tile .l{font-size:10.8px;color:var(--ink-400);margin-bottom:4px;}
+  .bid-tile .v{font-size:16.5px;font-weight:700;}
+  .bid-tile .v.red{color:var(--red-600);}
+  .bid-tile .sub{font-size:10.5px;color:var(--ink-400);margin-top:2px;}
+
+  .bid-form{display:flex;gap:10px;align-items:flex-end;margin-top:6px;}
+  .bid-form .field{flex:1;}
+  .bid-form input{font-size:15px;font-weight:700;padding:10px 12px;}
+  .bid-hint{font-size:11px;color:var(--ink-400);margin-top:6px;}
+  .verified-line{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--green-700);margin-top:8px;}
+
+  .live-dot{
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green-700);
+    background:var(--green-100);padding:4px 10px;border-radius:20px;
+  }
+  .live-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green-700);animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  .bid-history-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .bid-history-row.top{background:var(--green-50);margin:0 -20px;padding:9px 20px;}
+  .bid-history-row .win{color:var(--green-700);font-weight:700;}
+  .bid-history-row .lose{color:var(--ink-400);}
+
+  .server-clock{
+    font-size:26px;font-weight:700;letter-spacing:1px;color:var(--green-900);
+    display:flex;align-items:center;gap:10px;
+  }
+  .synced{font-size:11px;color:var(--green-700);display:flex;align-items:center;gap:4px;font-weight:700;}
+
+  .log-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12px;}
+  .log-time{color:var(--ink-400);width:110px;flex:0 0 auto;font-variant-numeric:tabular-nums;}
+  .log-badge{background:#eef1ef;color:var(--ink-600);font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;height:fit-content;}
+
+  .receipt{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:flex-start;}
+  .receipt-icon{width:34px;height:34px;border-radius:8px;background:var(--green-100);display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px;}
+  .receipt-grid .k{color:var(--ink-400);}
+  .receipt-grid .v{font-weight:600;}
+
+  /* toast */
+  #toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--green-900);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200;
+    display:flex;align-items:center;gap:8px;max-width:340px;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .donut-wrap{display:flex;align-items:center;gap:18px;}
+  .donut{width:120px;height:120px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--green-700) 0 72%, var(--amber-600) 72% 92%, var(--red-600) 92% 100%);
+    position:relative;}
+  .donut::after{content:'';position:absolute;inset:16px;background:#fff;border-radius:50%;}
+  .legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;}
+  .legend .li{display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+
+  .mini-select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;background:#fff;}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 14px;}
+
+  .trend-svg{width:100%;height:150px;}
+
+  .kri-threshold-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .bar-track{background:#eef1ef;border-radius:6px;height:10px;flex:1;margin:0 12px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <b>Pegadaian — Sistem Lelang</b>
+        <span>Mengatasi Masalah Tanpa Masalah</span>
+      </div>
+    </div>
+    <div class="proto-badge">⚠ Prototype tampilan — belum terhubung sistem nyata</div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-page="p1"><span class="tab-num">1</span>Katalog Lot &amp; Approval</button>
+    <button class="tab-btn" data-page="p2"><span class="tab-num">2</span>Live Bidding &amp; Timestamp</button>
+    <button class="tab-btn" data-page="p3"><span class="tab-num">3</span>Rekonsiliasi &amp; Kelebihan</button>
+    <button class="tab-btn" data-page="p4"><span class="tab-num">4</span>Dashboard KRI &amp; Audit</button>
+  </div>
+
+  <!-- ============ PAGE 1 ============ -->
+  <div class="page active" id="p1">
+    <div class="page-head">
+      <h1>Katalog Lot &amp; Approval Publikasi</h1>
+      <p>Pengelolaan katalog lelang dan persetujuan publikasi lot — klik apa saja, semua interaksi hanya simulasi tampilan.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-h">
+            <h2><span class="step-badge">1</span> Katalog Lot</h2>
+            <button class="btn btn-primary" onclick="toast('Form “Buat Lot Baru” dibuka (simulasi)')">+ Buat Lot Baru</button>
+          </div>
+          <p class="sub">Kelola dan tampilkan katalog lot yang siap untuk dipublikasikan.</p>
+
+          <div class="filters">
+            <div class="field"><label>Kategori</label><select><option>Semua Kategori</option><option>Sepeda Motor</option><option>Perhiasan</option><option>Logam Mulia</option></select></div>
+            <div class="field"><label>Jenis Lot</label><select><option>Semua Jenis</option></select></div>
+            <div class="field"><label>Lokasi</label><select><option>Semua Lokasi</option></select></div>
+            <div class="field"><label>Status</label><select><option>Semua Status</option></select></div>
+            <div class="field search"><label>Cari No. Lot / Barang / Lokasi</label><input id="lotSearch" placeholder="Ketik untuk mencari..." oninput="filterLots()"><span>🔍</span></div>
+          </div>
+
+          <div class="quickstatus" id="quickstatus">
+            <button class="qs-btn active" data-f="semua" onclick="setQuick(this)">Semua <b>256</b></button>
+            <button class="qs-btn" data-f="draft" onclick="setQuick(this)">Draft <b>42</b></button>
+            <button class="qs-btn" data-f="validasi" onclick="setQuick(this)">Validasi <b>36</b></button>
+            <button class="qs-btn" data-f="siap" onclick="setQuick(this)">Siap Publikasi <b>68</b></button>
+            <button class="qs-btn" data-f="published" onclick="setQuick(this)">Published <b>110</b></button>
+          </div>
+
+          <div class="lot-grid" id="lotGrid">
+            <div class="lot-card" data-status="siap" data-name="honda beat 2021 jakarta selatan">
+              <div class="lot-media"><span class="lot-status st-siap">Siap Publikasi</span>🛵</div>
+              <div class="lot-body">
+                <h3>Honda Beat 2021</h3>
+                <div class="lot-meta"><span>No. Lot</span><b>LOT-2025-000126</b></div>
+                <div class="lot-meta"><span>Lokasi</span><b>Jakarta Selatan</b></div>
+                <div class="lot-meta"><span>Limit Awal</span><b>Rp 9.250.000</b></div>
+                <div class="lot-meta"><span>Jadwal Lelang</span><b>28/05/2025</b></div>
+                <button class="lot-link" onclick="toast('Membuka detail LOT-2025-000126 (simulasi)')">Lihat Detail →</button>
+              </div>
+            </div>
+            <div class="lot-card" data-status="siap" data-name="yamaha nmax 2020 surabaya">
+              <div class="lot-media"><span class="lot-status st-siap">Siap Publikasi</span>🛵</div>
+              <div class="lot-body">
+                <h3>Yamaha NMAX 2020</h3>
+                <div class="lot-meta"><span>No. Lot</span><b>LOT-2025-000134</b></div>
+                <div class="lot-meta"><span>Lokasi</span><b>Surabaya</b></div>
+                <div class="lot-meta"><span>Limit Awal</span><b>Rp 17.600.000</b></div>
+                <div class="lot-meta"><span>Jadwal Lelang</span><b>29/05/2025</b></div>
+                <button class="lot-link" onclick="toast('Membuka detail LOT-2025-000134 (simulasi)')">Lihat Detail →</button>
+              </div>
+            </div>
+            <div class="lot-card" data-status="validasi" data-name="cincin emas 16 gram bandung">
+              <div class="lot-media"><span class="lot-status st-validasi">Validasi</span>💍</div>
+              <div class="lot-body">
+                <h3>Cincin Emas 16 Gram</h3>
+                <div class="lot-meta"><span>No. Lot</span><b>LOT-2025-000150</b></div>
+                <div class="lot-meta"><span>Lokasi</span><b>Bandung</b></div>
+                <div class="lot-meta"><span>Limit Awal</span><b>Rp 17.600.000</b></div>
+                <div class="lot-meta"><span>Jadwal Lelang</span><b>29/05/2025</b></div>
+                <button class="lot-link" onclick="toast('Membuka detail LOT-2025-000150 (simulasi)')">Lihat Detail →</button>
+              </div>
+            </div>
+            <div class="lot-card" data-status="draft" data-name="logam mulia 25 g medan">
+              <div class="lot-media"><span class="lot-status st-draft">Draft</span>🪙</div>
+              <div class="lot-body">
+                <h3>Logam Mulia 25 g</h3>
+                <div class="lot-meta"><span>No. Lot</span><b>LOT-2025-000172</b></div>
+                <div class="lot-meta"><span>Lokasi</span><b>Medan</b></div>
+                <div class="lot-meta"><span>Limit Awal</span><b>Rp 12.500.000</b></div>
+                <div class="lot-meta"><span>Jadwal Lelang</span><b>—</b></div>
+                <button class="lot-link" onclick="toast('Membuka detail LOT-2025-000172 (simulasi)')">Lihat Detail →</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pager" id="pager">
+            <button class="pg-btn" onclick="toast('Halaman sebelumnya (simulasi)')">«</button>
+            <button class="pg-btn" onclick="toast('Halaman sebelumnya (simulasi)')">‹</button>
+            <button class="pg-btn active">1</button>
+            <button class="pg-btn" onclick="gotoPage(this,2)">2</button>
+            <button class="pg-btn" onclick="gotoPage(this,3)">3</button>
+            <button class="pg-btn" onclick="gotoPage(this,4)">4</button>
+            <button class="pg-btn" onclick="gotoPage(this,5)">5</button>
+            <span class="pg-dots">…</span>
+            <button class="pg-btn" onclick="gotoPage(this,13)">13</button>
+            <button class="pg-btn" onclick="toast('Halaman berikutnya (simulasi)')">›</button>
+            <button class="pg-btn" onclick="toast('Halaman berikutnya (simulasi)')">»</button>
+          </div>
+
+          <div class="info-box">ℹ️ Katalog Lot berisi daftar barang yang diusulkan untuk lelang. Status menunjukkan posisi lot dalam alur pengelolaan hingga siap dipublikasikan.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-h">
+            <h2><span class="step-badge">2</span> Approval &amp; Queue Publikasi</h2>
+            <button class="btn" onclick="toast('Filter lanjutan dibuka (simulasi)')">▽ Filter Lanjutan</button>
+          </div>
+          <p class="sub">Tinjau dan setujui permintaan publikasi lot sesuai SLA yang berlaku.</p>
+
+          <div class="stat-row">
+            <div class="stat-tile" onclick="toast('Menampilkan antrian: Menunggu Persetujuan')">
+              <div class="lbl">Menunggu Persetujuan</div><div class="val">18 <i>⏳</i></div>
+            </div>
+            <div class="stat-tile" onclick="toast('Menampilkan antrian: Perlu Revisi')">
+              <div class="lbl">Perlu Revisi</div><div class="val">5 <i>✏️</i></div>
+            </div>
+            <div class="stat-tile" onclick="toast('Menampilkan antrian: Lewat SLA')">
+              <div class="lbl">Lewat SLA</div><div class="val" style="color:var(--red-600)">2 <i>⚠️</i></div>
+            </div>
+            <div class="stat-tile" onclick="toast('Menampilkan antrian: Disetujui Hari Ini')">
+              <div class="lbl">Disetujui Hari Ini</div><div class="val" style="color:var(--green-700)">32 <i>✅</i></div>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>ID Lot</th><th>Jenis Lot</th><th>Lokasi</th><th>Status Validasi</th><th>Permintaan Publikasi</th><th>SLA</th><th>Aksi</th>
+            </tr></thead>
+            <tbody id="approvalBody">
+              <tr data-id="LOT-2025-000126">
+                <td class="link" onclick="toast('Membuka LOT-2025-000126')">LOT-2025-000126</td><td>Sepeda Motor</td><td>Jakarta Selatan</td>
+                <td><span class="pill pill-green">Valid</span></td><td>24/05/2025 09:12</td><td class="sla-ok">01:25</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+              <tr data-id="LOT-2025-000134">
+                <td class="link" onclick="toast('Membuka LOT-2025-000134')">LOT-2025-000134</td><td>Sepeda Motor</td><td>Surabaya</td>
+                <td><span class="pill pill-green">Valid</span></td><td>24/05/2025 08:45</td><td class="sla-late">00:40</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+              <tr data-id="LOT-2025-000150">
+                <td class="link" onclick="toast('Membuka LOT-2025-000150')">LOT-2025-000150</td><td>Perhiasan</td><td>Bandung</td>
+                <td><span class="pill pill-green">Valid</span></td><td>23/05/2025 16:30</td><td class="sla-late">00:50</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+              <tr data-id="LOT-2025-000172">
+                <td class="link" onclick="toast('Membuka LOT-2025-000172')">LOT-2025-000172</td><td>Logam Mulia</td><td>Medan</td>
+                <td><span class="pill pill-green">Valid</span></td><td>23/05/2025 11:05</td><td class="sla-ok">02:10</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+              <tr data-id="LOT-2025-000181">
+                <td class="link" onclick="toast('Membuka LOT-2025-000181')">LOT-2025-000181</td><td>Elektronik</td><td>Makassar</td>
+                <td><span class="pill pill-green">Valid</span></td><td>22/05/2025 14:20</td><td class="sla-ok">00:20</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+              <tr data-id="LOT-2025-000189">
+                <td class="link" onclick="toast('Membuka LOT-2025-000189')">LOT-2025-000189</td><td>Peralatan Usaha</td><td>Semarang</td>
+                <td><span class="pill pill-amber">Perlu Revisi</span></td><td>22/05/2025 10:10</td><td>—</td>
+                <td class="row-actions">
+                  <button class="btn btn-sm btn-green" onclick="approveRow(this)">Setujui</button>
+                  <button class="btn btn-sm btn-amber" onclick="reviseRow(this)">Minta Revisi</button>
+                  <button class="btn btn-sm btn-red" onclick="rejectRow(this)">Tolak</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+          <p style="margin-top:12px;"><span class="link" onclick="toast('Membuka seluruh antrian (simulasi)')">Lihat semua antrian →</span></p>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">3</span> Checklist Validasi Lot</h2></div>
+          <p class="sub">Pastikan seluruh persyaratan validasi terpenuhi sebelum publikasi.</p>
+          <div class="checklist">
+            <div class="cl-item"><div class="cl-icon">📋</div><div class="cl-txt"><b>Data Mandatory Lengkap</b><span>Semua field wajib telah diisi sesuai ketentuan.</span></div><div class="cl-status">✅ Memenuhi</div></div>
+            <div class="cl-item"><div class="cl-icon">👥</div><div class="cl-txt"><b>Maker–Checker–Approver</b><span>Proses sesuai pemisahan peran (SoD).</span></div><div class="cl-status">✅ Memenuhi</div></div>
+            <div class="cl-item"><div class="cl-icon">📑</div><div class="cl-txt"><b>Verifikasi Dokumen</b><span>Dokumen legal, kepemilikan, dan foto valid.</span></div><div class="cl-status">✅ Memenuhi</div></div>
+            <div class="cl-item"><div class="cl-icon">🔁</div><div class="cl-txt"><b>Approval Trail Tercatat</b><span>Jejak persetujuan lengkap dan berurutan.</span></div><div class="cl-status">✅ Memenuhi</div></div>
+            <div class="cl-item"><div class="cl-icon">💰</div><div class="cl-txt"><b>Kelayakan &amp; Penilaian</b><span>Penilaian taksiran dan kondisi barang valid.</span></div><div class="cl-status">✅ Memenuhi</div></div>
+            <div class="cl-item"><div class="cl-icon">🕐</div><div class="cl-txt"><b>Catatan Exception (Jika Ada)</b><span>Risiko atau pengecualian telah dicatat.</span></div><div class="cl-status">✅ Tidak Ada</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kontrol-strip">
+      <div class="kt"><span class="kt-icon">📝</span><div><b>Validasi Data Lot</b><span>Validasi otomatis &amp; manual untuk kelengkapan dan kebenaran data.</span></div></div>
+      <div class="kt"><span class="kt-icon">✅</span><div><b>Approval Publikasi</b><span>Persetujuan berjenjang sebelum lot dipublikasikan ke portal lelang.</span></div></div>
+      <div class="kt"><span class="kt-icon">👥</span><div><b>Segregation of Duties</b><span>Pemisahan peran Maker, Checker, Approver mencegah benturan kepentingan.</span></div></div>
+      <div class="kt"><span class="kt-icon">🛡️</span><div><b>Audit Trail</b><span>Seluruh aktivitas terekam lengkap untuk akuntabilitas.</span></div></div>
+      <div class="kt"><span class="kt-icon">🔄</span><div><b>Status &amp; Versioning</b><span>Pelacakan status dan versi lot secara real-time.</span></div></div>
+    </div>
+    <div class="footer-note">ℹ️ Sistem dirancang dengan prinsip transparansi, akuntabilitas, dan integritas untuk memastikan katalog lot yang valid, andal, dan siap dipublikasikan.</div>
+  </div>
+
+  <!-- ============ PAGE 2 : LIVE BIDDING ============ -->
+  <div class="page" id="p2">
+    <div class="page-head">
+      <h1>Live Bidding &amp; Server Timestamp</h1>
+      <p>Penawaran real-time, bukti penawaran, dan pencatatan waktu server — coba masukkan nominal dan klik "Ajukan Penawaran".</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><h2><span class="step-badge">1</span> Live Bidding</h2><span class="live-dot">Lelang Berlangsung</span></div>
+        <h3 style="margin:12px 0 2px;font-size:15px;">Sepeda Motor Honda Beat 2021</h3>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--ink-400);">LOT: LOT-2021-000785</p>
+
+        <div class="honda-media">🛵</div>
+        <div class="thumb-row">
+          <div class="thumb active" onclick="swapThumb(this)">🛵</div>
+          <div class="thumb" onclick="swapThumb(this)">🔧</div>
+          <div class="thumb" onclick="swapThumb(this)">🪪</div>
+          <div class="thumb" onclick="swapThumb(this)">⏱️</div>
+        </div>
+
+        <div class="spec-grid">
+          <div class="spec-row"><span>Kategori</span><span>Sepeda Motor</span></div>
+          <div class="spec-row"><span>Tahun</span><span>2021</span></div>
+          <div class="spec-row"><span>Warna</span><span>Hitam</span></div>
+          <div class="spec-row"><span>Odometer</span><span>8.281 km</span></div>
+          <div class="spec-row"><span>STNK / BPKB / Faktur</span><span>Ada / Ada / Ada</span></div>
+          <div class="spec-row"><span>Lokasi</span><span>Jakarta Selatan</span></div>
+        </div>
+
+        <div class="bid-summary">
+          <div class="bid-tile"><div class="l">Penawaran Tertinggi</div><div class="v" id="highestBid">Rp 9.250.000</div><div class="sub">oleh: <span id="highestBidder">Peserta_3307</span></div></div>
+          <div class="bid-tile"><div class="l">Kenaikan Minimum</div><div class="v">Rp 250.000</div></div>
+          <div class="bid-tile"><div class="l">Sisa Waktu (WIB)</div><div class="v red" id="countdown">00:02:25</div><div class="sub">Rabu, 24 Mei 2024</div></div>
+        </div>
+
+        <div class="card-h" style="margin-top:6px;"><h2 style="font-size:13.5px;">Ajukan Penawaran Anda</h2></div>
+        <div class="bid-form">
+          <div class="field"><input type="text" id="bidInput" value="9.500.000" onkeyup="formatBidInput()"></div>
+          <button class="btn btn-primary" style="padding:10px 22px;" onclick="submitBid()">Ajukan Penawaran</button>
+        </div>
+        <div class="bid-hint">Minimal Rp 9.500.000</div>
+        <div class="verified-line">🛡️ Terverifikasi &amp; Tercatat di Server</div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">1</span> Riwayat Penawaran (Real-Time)</h2><span class="live-dot">Live</span></div>
+          <div id="bidHistory">
+            <div class="bid-history-row top"><span>14:28:10.123 · Peserta_3307</span><span><b>Rp 9.250.000</b> <span class="win">Tertinggi</span></span></div>
+            <div class="bid-history-row"><span>14:27:48.581 · Peserta_1982</span><span>Rp 9.000.000 <span class="lose">Kalah</span></span></div>
+            <div class="bid-history-row"><span>14:27:16.332 · Peserta_0764</span><span>Rp 8.750.000 <span class="lose">Kalah</span></span></div>
+            <div class="bid-history-row"><span>14:26:43.907 · Peserta_1982</span><span>Rp 8.500.000 <span class="lose">Kalah</span></span></div>
+            <div class="bid-history-row"><span>14:26:11.221 · Peserta_0456</span><span>Rp 8.250.000 <span class="lose">Kalah</span></span></div>
+          </div>
+          <div class="info-box">🛡️ Setiap penawaran tersimpan real-time dengan timestamp server resmi.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">2</span> Server Timestamp &amp; Activity Log</h2></div>
+          <p class="sub" style="margin-bottom:8px;">Waktu Server Resmi (WIB)</p>
+          <div class="server-clock" id="serverClock">14:28:10.123 <span class="synced">✅ Tersinkronisasi</span></div>
+
+          <p class="sub" style="margin:14px 0 6px;">Catatan Peristiwa (Activity Log)</p>
+          <div id="activityLog">
+            <div class="log-row"><span class="log-time">14:28:10.123</span><span class="log-badge">BID_SUBMITTED</span><span>Peserta_3307 — Rp 9.250.000</span></div>
+            <div class="log-row"><span class="log-time">14:27:48.581</span><span class="log-badge">BID_SUBMITTED</span><span>Peserta_1982 — Rp 9.000.000</span></div>
+            <div class="log-row"><span class="log-time">14:27:16.332</span><span class="log-badge">BID_SUBMITTED</span><span>Peserta_0764 — Rp 8.750.000</span></div>
+            <div class="log-row"><span class="log-time">14:26:43.907</span><span class="log-badge">BID_SUBMITTED</span><span>Peserta_1982 — Rp 8.500.000</span></div>
+            <div class="log-row"><span class="log-time">14:26:11.221</span><span class="log-badge">BID_SUBMITTED</span><span>Peserta_0456 — Rp 8.250.000</span></div>
+          </div>
+          <div class="info-box">🛡️ Waktu server menggunakan NTP terverifikasi dan tidak dapat diubah (immutable).</div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">3</span> Bukti Penawaran (Bid Receipt)</h2></div>
+          <div class="receipt">
+            <div class="receipt-icon">📄</div>
+            <div class="receipt-grid">
+              <span class="k">Nomor Referensi</span><span class="v">BR-2024-0000785-3307</span>
+              <span class="k">ID Peserta</span><span class="v">Peserta_3307</span>
+              <span class="k">Nama Peserta</span><span class="v">Budi Santoso</span>
+              <span class="k">Lot</span><span class="v">LOT-2021-000785</span>
+              <span class="k">Barang</span><span class="v">Sepeda Motor Honda Beat 2021</span>
+              <span class="k">Nominal Penawaran</span><span class="v" id="receiptAmount">Rp 9.250.000</span>
+              <span class="k">Waktu Server (WIB)</span><span class="v" id="receiptTime">24/05/2024 14:28:10.123</span>
+              <span class="k">Status</span><span class="v"><span class="pill pill-green">Tercatat</span></span>
+            </div>
+          </div>
+          <div class="info-box" style="justify-content:space-between;">
+            <span>✅ Bukti penawaran ini tersimpan di server dan dapat diverifikasi.</span>
+            <button class="btn btn-sm" onclick="toast('Mengunduh bukti penawaran (simulasi PDF)')">⬇ Unduh PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kontrol-strip">
+      <div class="kt"><span class="kt-icon">🕒</span><div><b>Server Timestamp Resmi</b><span>Waktu server akurat, tersinkronisasi (NTP), dan tidak dapat diubah.</span></div></div>
+      <div class="kt"><span class="kt-icon">🔒</span><div><b>Immutable Bid Log</b><span>Setiap penawaran tercatat permanen dan tidak dapat dimodifikasi.</span></div></div>
+      <div class="kt"><span class="kt-icon">📄</span><div><b>Bukti Penawaran</b><span>Bukti digital otomatis untuk setiap penawaran yang berhasil dikirim.</span></div></div>
+      <div class="kt"><span class="kt-icon">📊</span><div><b>Histori Penawaran</b><span>Riwayat penawaran real-time yang transparan dan relevan.</span></div></div>
+      <div class="kt"><span class="kt-icon">🔔</span><div><b>Notifikasi Hasil</b><span>Informasi hasil lelang dan status penawaran real-time.</span></div></div>
+    </div>
+    <div class="footer-note">✅ Sistem dirancang dengan prinsip transparansi, akuntabilitas, dan integritas untuk memastikan lelang yang aman, adil, dan terpercaya.</div>
+  </div>
+
+  <!-- ============ PAGE 3 : REKONSILIASI ============ -->
+  <div class="page" id="p3">
+    <div class="page-head">
+      <h1>Dashboard Rekonsiliasi &amp; Uang Kelebihan</h1>
+      <p>Pemantauan pembayaran, rekonsiliasi, dan pengelolaan uang kelebihan hasil lelang.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-h"><h2>📊 Dashboard Rekonsiliasi</h2></div>
+        <div class="stat-row">
+          <div class="stat-tile" onclick="toast('Menampilkan rincian Total Pembayaran')"><div class="lbl">Total Pembayaran</div><div class="val" style="font-size:19px;">Rp 760.000.000</div><div class="sub" style="font-size:11px;color:var(--ink-400);">128 Transaksi</div></div>
+          <div class="stat-tile" onclick="toast('Menampilkan rincian Sudah Rekonsiliasi')"><div class="lbl">Sudah Rekonsiliasi</div><div class="val" style="font-size:19px;color:var(--green-700);">Rp 742.450.000</div><div class="sub" style="font-size:11px;color:var(--ink-400);">110 Transaksi</div></div>
+          <div class="stat-tile" onclick="toast('Menampilkan rincian Selisih')"><div class="lbl">Selisih</div><div class="val" style="font-size:19px;color:var(--red-600);">Rp 17.550.000</div><div class="sub" style="font-size:11px;color:var(--ink-400);">18 Transaksi</div></div>
+          <div class="stat-tile" onclick="toast('Menampilkan rincian Persentase Rekonsiliasi')"><div class="lbl">Persentase Rekonsiliasi</div><div class="val" style="font-size:19px;">97,69%</div><div class="sub" style="font-size:11px;color:var(--ink-400);">Dari Total Pembayaran</div></div>
+        </div>
+
+        <div class="card-h"><h2 style="font-size:14px;">Rekonsiliasi per Kanal Transaksi</h2></div>
+        <div class="toolbar">
+          <select class="mini-select"><option>Semua Kanal</option><option>Kanal Kasir</option><option>Teller</option><option>Virtual Account</option></select>
+          <input class="mini-select" type="text" value="24/05/2025" style="width:120px;">
+          <button class="btn btn-green" onclick="reProses()">🔄 Proses Rekonsiliasi</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Kanal / Sumber</th><th>Jumlah Transaksi</th><th>Total Pembayaran</th><th>Total Setor</th><th>Selisih</th><th>Status</th></tr></thead>
+          <tbody id="rekonBody">
+            <tr><td>Kanal Kasir</td><td>42</td><td>Rp 245.600.000</td><td>Rp 245.600.000</td><td>Rp 0</td><td><span class="pill pill-green">Sesuai</span></td></tr>
+            <tr><td>Teller</td><td>22</td><td>Rp 124.500.000</td><td>Rp 123.900.000</td><td style="color:var(--red-600);">Rp 600.000</td><td><span class="pill pill-amber">Selisih</span></td></tr>
+            <tr><td>Virtual Account</td><td>32</td><td>Rp 198.900.000</td><td>Rp 198.950.000</td><td style="color:var(--red-600);">Rp 7.950.000</td><td><span class="pill pill-amber">Selisih</span></td></tr>
+            <tr><td>Gateway (QRIS)</td><td>16</td><td>Rp 145.200.000</td><td>Rp 142.300.000</td><td style="color:var(--red-600);">Rp 2.900.000</td><td><span class="pill pill-amber">Selisih</span></td></tr>
+            <tr><td>Transfer Bank</td><td>8</td><td>Rp 46.700.000</td><td>Rp 46.700.000</td><td>Rp 0</td><td><span class="pill pill-green">Sesuai</span></td></tr>
+            <tr><td>E-Wallet</td><td>6</td><td>Rp 43.100.000</td><td>Rp 42.600.000</td><td style="color:var(--red-600);">Rp 500.000</td><td><span class="pill pill-amber">Selisih</span></td></tr>
+            <tr style="font-weight:700;background:#f8faf8;"><td>TOTAL</td><td>128</td><td>Rp 760.000.000</td><td>Rp 742.450.000</td><td style="color:var(--red-600);">Rp 17.550.000</td><td>97,69%</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p style="margin-top:12px;"><span class="link" onclick="toast('Membuka detail transaksi (simulasi)')">Lihat detail transaksi →</span></p>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-h"><h2>🧮 Perhitungan Uang Kelebihan</h2></div>
+          <div class="stat-row" style="grid-template-columns:repeat(2,1fr);">
+            <div class="stat-tile"><div class="lbl">Total Penerimaan</div><div class="val" style="font-size:16px;">Rp 6.550.000</div></div>
+            <div class="stat-tile"><div class="lbl">Total Kewajiban</div><div class="val" style="font-size:16px;">Rp 5.000.000</div></div>
+            <div class="stat-tile"><div class="lbl">Sudah Dibayarkan</div><div class="val" style="font-size:16px;">Rp 500.000</div></div>
+            <div class="stat-tile"><div class="lbl">Sisa Kelebihan</div><div class="val" style="font-size:16px;color:var(--amber-600);">Rp 1.050.000</div></div>
+          </div>
+
+          <table style="margin-top:6px;">
+            <thead><tr><th>Komponen</th><th>Perhitungan</th><th>Nilai</th></tr></thead>
+            <tbody>
+              <tr><td>Total Penerimaan</td><td>Dari pembayaran nasabah (incl. biaya admin)</td><td>Rp 6.550.000</td></tr>
+              <tr><td>Total Kewajiban</td><td>Pokok + Bunga + Biaya + Denda</td><td>Rp 5.000.000</td></tr>
+              <tr><td>Uang Kelebihan (Bruto)</td><td>Total Penerimaan − Total Kewajiban</td><td style="color:var(--green-700);font-weight:700;">Rp 1.550.000</td></tr>
+              <tr><td>Sudah Dibayarkan</td><td>Transfer ke rekening nasabah</td><td style="color:var(--red-600);">Rp 500.000</td></tr>
+              <tr><td>Sisa Kelebihan</td><td>Belum dibayarkan ke nasabah</td><td style="color:var(--amber-600);font-weight:700;">Rp 1.050.000</td></tr>
+            </tbody>
+          </table>
+          <div class="toolbar">
+            <button class="btn btn-green" onclick="toast('Menghitung ulang uang kelebihan (simulasi)')">🔄 Hitung Ulang</button>
+            <span class="link" style="margin-left:auto;" onclick="toast('Membuka riwayat pembayaran (simulasi)')">Lihat riwayat pembayaran →</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>👥 Status Klaim Uang Kelebihan</h2></div>
+          <div class="stat-row">
+            <div class="stat-tile"><div class="lbl">Menunggu Validasi</div><div class="val" style="font-size:18px;">28 ⏳</div></div>
+            <div class="stat-tile"><div class="lbl">Dalam Proses</div><div class="val" style="font-size:18px;">36 ⚙️</div></div>
+            <div class="stat-tile"><div class="lbl">Selesai</div><div class="val" style="font-size:18px;color:var(--green-700);">52 ✅</div></div>
+            <div class="stat-tile"><div class="lbl">Lewat SLA</div><div class="val" style="font-size:18px;color:var(--red-600);">12 ⏰</div></div>
+          </div>
+          <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>No. Klaim</th><th>Tanggal Klaim</th><th>Aging</th><th>Status</th><th>Nilai Kelebihan</th><th>Aksi</th></tr></thead>
+            <tbody>
+              <tr><td class="link" onclick="toast('Membuka CLM-250524-00045')">CLM-250524-00045</td><td>20/05/2025</td><td>4 hari</td><td><span class="pill pill-gray">Proses</span></td><td>Rp 250.000</td><td><button class="btn btn-sm" onclick="toast('Menampilkan detail klaim (simulasi)')">Lihat</button></td></tr>
+              <tr><td class="link" onclick="toast('Membuka CLM-250524-00041')">CLM-250524-00041</td><td>17/05/2025</td><td>7 hari</td><td><span class="pill pill-amber">Menunggu Validasi</span></td><td>Rp 185.000</td><td><button class="btn btn-sm" onclick="toast('Menampilkan detail klaim (simulasi)')">Lihat</button></td></tr>
+              <tr><td class="link" onclick="toast('Membuka CLM-250523-00036')">CLM-250523-00036</td><td>15/05/2025</td><td>9 hari</td><td><span class="pill pill-red">Lewat SLA</span></td><td>Rp 310.000</td><td><button class="btn btn-sm" onclick="toast('Menampilkan detail klaim (simulasi)')">Lihat</button></td></tr>
+              <tr><td class="link" onclick="toast('Membuka CLM-250523-00029')">CLM-250523-00029</td><td>14/05/2025</td><td>10 hari</td><td><span class="pill pill-gray">Proses</span></td><td>Rp 120.000</td><td><button class="btn btn-sm" onclick="toast('Menampilkan detail klaim (simulasi)')">Lihat</button></td></tr>
+              <tr><td class="link" onclick="toast('Membuka CLM-250523-00012')">CLM-250523-00012</td><td>12/05/2025</td><td>12 hari</td><td><span class="pill pill-red">Lewat SLA</span></td><td>Rp 185.000</td><td><button class="btn btn-sm" onclick="toast('Menampilkan detail klaim (simulasi)')">Lihat</button></td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p style="margin-top:12px;"><span class="link" onclick="toast('Membuka semua klaim (simulasi)')">Lihat semua klaim →</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kontrol-strip" style="grid-template-columns:repeat(6,1fr);">
+      <div class="kt"><span class="kt-icon">🔄</span><div><b>Rekonsiliasi Otomatis</b><span>Rekonsiliasi otomatis per kanal dan pencocokan data transaksi real-time.</span></div></div>
+      <div class="kt"><span class="kt-icon">⚠️</span><div><b>Exception Handling</b><span>Identifikasi selisih &amp; mismatch serta penanganan exception terstruktur.</span></div></div>
+      <div class="kt"><span class="kt-icon">🧮</span><div><b>Formula Baku Perhitungan</b><span>Perhitungan uang kelebihan menggunakan formula baku yang konsisten.</span></div></div>
+      <div class="kt"><span class="kt-icon">⏱️</span><div><b>Claim Aging</b><span>Monitoring aging klaim berdasarkan SLA untuk percepatan penyelesaian.</span></div></div>
+      <div class="kt"><span class="kt-icon">🔔</span><div><b>Notifikasi &amp; Reminder</b><span>Notifikasi otomatis untuk selisih, SLA terlewati, dan klaim tertunda.</span></div></div>
+      <div class="kt"><span class="kt-icon">📋</span><div><b>Audit Trail</b><span>Jejak audit lengkap atas setiap proses rekonsiliasi dan pembayaran.</span></div></div>
+    </div>
+    <div class="footer-note">ℹ️ Data pada dashboard ini bersifat informatif dan diperbarui secara berkala setiap hari.</div>
+  </div>
+
+  <!-- ============ PAGE 4 : KRI & AUDIT ============ -->
+  <div class="page" id="p4">
+    <div class="page-head">
+      <h1>Dashboard KRI &amp; Audit Trail</h1>
+      <p>Monitoring indikator risiko utama dan jejak audit aktivitas sistem.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">1</span> Dashboard KRI</h2><span style="font-size:11px;color:var(--ink-400);">Data per 24/05/2025 14:30 WIB 🔄</span></div>
+          <div class="donut-wrap">
+            <div class="donut"></div>
+            <div class="legend">
+              <div class="li"><span class="dot" style="background:var(--green-700);"></span>Aman 72% (13)</div>
+              <div class="li"><span class="dot" style="background:var(--amber-600);"></span>Waspada 20% (4)</div>
+              <div class="li"><span class="dot" style="background:var(--red-600);"></span>Kritis 8% (2)</div>
+              <div class="li" style="margin-top:6px;font-weight:700;">Total Indikator: 19</div>
+            </div>
+          </div>
+
+          <table style="margin-top:16px;">
+            <thead><tr><th>Ringkasan KRI</th><th></th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Override Rate</td><td>2,45%</td><td><span class="pill pill-amber">Waspada</span></td></tr>
+              <tr><td>Rekonsiliasi Selisih</td><td>0,78%</td><td><span class="pill pill-green">Aman</span></td></tr>
+              <tr><td>Dispute Aging &gt; SLA</td><td>12,6%</td><td><span class="pill pill-red">Kritis</span></td></tr>
+              <tr><td>Approval Aging &gt; SLA</td><td>5,9%</td><td><span class="pill pill-amber">Waspada</span></td></tr>
+            </tbody>
+          </table>
+
+          <p class="sub" style="margin:16px 0 6px;">Trend 12 Minggu Terakhir</p>
+          <svg class="trend-svg" viewBox="0 0 640 160" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#c0392b" stroke-width="2" points="10,120 65,118 120,122 175,116 230,100 285,96 340,104 395,90 450,110 505,116 560,98 615,102"/>
+            <polyline fill="none" stroke="#b8860b" stroke-width="2" points="10,140 65,138 120,136 175,138 230,135 285,132 340,130 395,128 450,132 505,130 560,133 615,131"/>
+            <polyline fill="none" stroke="#1a7a4c" stroke-width="2" points="10,50 65,44 120,48 175,52 230,32 285,28 340,40 395,24 450,44 505,48 560,50 615,34"/>
+            <polyline fill="none" stroke="#16211c" stroke-width="2" points="10,95 65,98 120,90 175,92 230,90 285,88 340,86 395,90 450,86 505,88 560,92 615,86"/>
+          </svg>
+          <div class="legend" style="flex-direction:row;flex-wrap:wrap;gap:14px;font-size:11px;">
+            <span><span class="dot" style="background:#c0392b;"></span> Override Rate</span>
+            <span><span class="dot" style="background:#b8860b;"></span> Rekonsiliasi Selisih</span>
+            <span><span class="dot" style="background:#1a7a4c;"></span> Dispute Aging &gt; SLA</span>
+            <span><span class="dot" style="background:#16211c;"></span> Approval Aging &gt; SLA</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2 style="font-size:14px;">Ambang Batas (Threshold KRI)</h2></div>
+          <div class="kri-threshold-row"><span>Override Rate (≤3%)</span><div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--amber-600);"></div></div><span class="pill pill-amber">Waspada</span></div>
+          <div class="kri-threshold-row"><span>Rekonsiliasi Selisih (≤1%)</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--green-700);"></div></div><span class="pill pill-green">Aman</span></div>
+          <div class="kri-threshold-row"><span>Dispute Aging &gt; SLA (≤10%)</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:var(--red-600);"></div></div><span class="pill pill-red">Kritis</span></div>
+          <div class="kri-threshold-row"><span>Approval Aging &gt; SLA (≤10%)</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--amber-600);"></div></div><span class="pill pill-amber">Waspada</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-h"><h2><span class="step-badge">2</span> Audit Trail Viewer</h2><button class="btn btn-sm" onclick="toast('Log bersifat immutable, tidak dapat diubah')">🔒 Immutable Log</button></div>
+          <div class="filters" style="grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;">
+            <div class="field"><label>Rentang Waktu</label><input value="17/05/2025 – 24/05/2025"></div>
+            <div class="field"><label>Pengguna</label><select><option>Semua</option></select></div>
+            <div class="field"><label>Aksi</label><select><option>Semua</option></select></div>
+            <div class="field"><label>Modul</label><select><option>Semua</option></select></div>
+            <div class="field"><label>Status</label><select><option>Semua</option></select></div>
+          </div>
+          <button class="btn btn-primary" style="margin-bottom:12px;" onclick="toast('Mencari log audit (simulasi)')">🔍 Cari</button>
+
+          <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Modul</th><th>Detail</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>24/05/2025 14:28:35</td><td>budi.santoso</td><td>UPDATE</td><td>KRI</td><td>Ubah ambang batas dari 3% menjadi 2,5%</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 14:20:17</td><td>sri.wahyuni</td><td>APPROVE</td><td>Approval</td><td>ID: APP-2025-001234</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 14:15:02</td><td>andi.pratama</td><td>CREATE</td><td>Dispute</td><td>ID: DSP-2025-000987</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 14:10:48</td><td>ratna.dewi</td><td>REJECT</td><td>Approval</td><td>ID: APP-2025-001233</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 14:05:31</td><td>fajar.nugroho</td><td>LOGIN</td><td>Akses</td><td>IP: 10.20.30.45</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 13:58:22</td><td>siti.aisyah</td><td>EXPORT</td><td>Laporan</td><td>Format: XLSX</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 13:47:11</td><td>yusuf.rahman</td><td>VIEW</td><td>Dashboard</td><td>Melihat ringkasan KRI</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 13:35:09</td><td>mega.puspita</td><td>DELETE</td><td>User Access</td><td>User: john.doe</td><td><span class="pill pill-red">Gagal</span></td></tr>
+              <tr><td>24/05/2025 13:22:44</td><td>budi.santoso</td><td>UPDATE</td><td>KRI</td><td>Ubah threshold 1% → 0,8%</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+              <tr><td>24/05/2025 13:10:37</td><td>sri.wahyuni</td><td>VIEW</td><td>Audit Trail</td><td>Filter: 17/05–24/05/2025</td><td><span class="pill pill-green">Berhasil</span></td></tr>
+            </tbody>
+          </table>
+          </div>
+          <div class="toolbar">
+            <span style="font-size:11.5px;color:var(--ink-400);">Menampilkan 1–10 dari 256 catatan</span>
+            <div class="pager" style="margin:0 0 0 auto;">
+              <button class="pg-btn active">1</button>
+              <button class="pg-btn" onclick="gotoPage(this,2)">2</button>
+              <button class="pg-btn" onclick="gotoPage(this,3)">3</button>
+              <span class="pg-dots">…</span>
+              <button class="pg-btn" onclick="gotoPage(this,26)">26</button>
+            </div>
+            <button class="btn btn-sm" onclick="toast('Mengekspor log audit (simulasi)')">⬇ Ekspor Log</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns:1fr 1fr;">
+          <div class="card">
+            <div class="card-h"><h2><span class="step-badge">3</span> User Access Review</h2></div>
+            <p class="sub">Terakhir Review: 24/05/2025</p>
+            <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+              <div class="stat-tile"><div class="lbl">Total Pengguna</div><div class="val" style="font-size:17px;">256 👥</div></div>
+              <div class="stat-tile"><div class="lbl">Akses Disetujui</div><div class="val" style="font-size:17px;color:var(--green-700);">228 ✅</div></div>
+              <div class="stat-tile"><div class="lbl">Akses Perlu Review</div><div class="val" style="font-size:17px;color:var(--amber-600);">21 🛡️</div></div>
+              <div class="stat-tile"><div class="lbl">Akses Berisiko Tinggi</div><div class="val" style="font-size:17px;color:var(--red-600);">7 🚫</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h2><span class="step-badge">4</span> Incident Log</h2></div>
+            <p class="sub">Terakhir Update: 24/05/2025 14:30 WIB</p>
+            <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+              <div class="stat-tile"><div class="lbl">Total Insiden</div><div class="val" style="font-size:17px;">8 ⚠️</div></div>
+              <div class="stat-tile"><div class="lbl">Open</div><div class="val" style="font-size:17px;color:var(--amber-600);">3 🕐</div></div>
+              <div class="stat-tile"><div class="lbl">In Progress</div><div class="val" style="font-size:17px;color:#1c5da0;">4 🔄</div></div>
+              <div class="stat-tile"><div class="lbl">Closed (7 Hari)</div><div class="val" style="font-size:17px;color:var(--green-700);">1 ✅</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kontrol-strip">
+      <div class="kt"><span class="kt-icon">🎯</span><div><b>KRI Threshold</b><span>Pemantauan indikator risiko berdasarkan ambang batas yang telah ditetapkan.</span></div></div>
+      <div class="kt"><span class="kt-icon">🔒</span><div><b>Audit Trail Immutable</b><span>Seluruh aktivitas sistem terekam immutable dan tidak dapat diubah.</span></div></div>
+      <div class="kt"><span class="kt-icon">👥</span><div><b>Access Review</b><span>Review akses pengguna secara berkala untuk meminimalkan risiko akses tidak sah.</span></div></div>
+      <div class="kt"><span class="kt-icon">⚠️</span><div><b>Incident Management</b><span>Pencatatan dan penanganan insiden untuk memastikan resolusi tepat waktu.</span></div></div>
+      <div class="kt"><span class="kt-icon">📤</span><div><b>Report Export</b><span>Ekspor laporan KRI, Audit Trail, dan insiden dalam berbagai format.</span></div></div>
+    </div>
+    <div class="footer-note">🛡️ Sistem dirancang dengan prinsip transparansi, akuntabilitas, dan integritas untuk meminimalkan risiko serta memastikan kepatuhan.</div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ---------- tab navigation ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.page).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = '✅ ' + msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ---------- page 1: lot filter ---------- */
+function setQuick(el){
+  document.querySelectorAll('#quickstatus .qs-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  filterLots();
+}
+function filterLots(){
+  const active = document.querySelector('#quickstatus .qs-btn.active').dataset.f;
+  const q = document.getElementById('lotSearch').value.toLowerCase();
+  document.querySelectorAll('.lot-card').forEach(card=>{
+    const matchesStatus = active === 'semua' || card.dataset.status === active;
+    const matchesSearch = card.dataset.name.includes(q);
+    card.classList.toggle('hidden', !(matchesStatus && matchesSearch));
+  });
+}
+function gotoPage(el, n){
+  document.querySelectorAll(el.closest('.pager').querySelectorAll('.pg-btn')).forEach?.(()=>{});
+  el.parentElement.querySelectorAll('.pg-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  toast('Menampilkan halaman ' + n + ' (simulasi)');
+}
+
+/* ---------- page 1: approval actions ---------- */
+function approveRow(btn){
+  const tr = btn.closest('tr');
+  const id = tr.dataset.id;
+  const statusCell = tr.querySelector('td:nth-child(4)');
+  statusCell.innerHTML = '<span class="pill pill-green">Disetujui</span>';
+  tr.style.opacity = '.55';
+  toast('Lot ' + id + ' disetujui untuk publikasi');
+}
+function reviseRow(btn){
+  const tr = btn.closest('tr');
+  const id = tr.dataset.id;
+  const statusCell = tr.querySelector('td:nth-child(4)');
+  statusCell.innerHTML = '<span class="pill pill-amber">Perlu Revisi</span>';
+  toast('Permintaan revisi dikirim untuk lot ' + id);
+}
+function rejectRow(btn){
+  const tr = btn.closest('tr');
+  const id = tr.dataset.id;
+  const statusCell = tr.querySelector('td:nth-child(4)');
+  statusCell.innerHTML = '<span class="pill pill-red">Ditolak</span>';
+  tr.style.opacity = '.55';
+  toast('Lot ' + id + ' ditolak');
+}
+
+/* ---------- page 2: live bidding ---------- */
+function swapThumb(el){
+  document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelector('.honda-media').textContent = el.textContent;
+}
+function formatBidInput(){
+  const input = document.getElementById('bidInput');
+  let raw = input.value.replace(/\D/g,'');
+  if(raw){
+    input.value = Number(raw).toLocaleString('id-ID');
+  }
+}
+let bidCounter = 3308;
+function submitBid(){
+  const raw = document.getElementById('bidInput').value.replace(/\D/g,'');
+  const val = Number(raw || 0);
+  if(val < 9500000){
+    toast('Penawaran minimal Rp 9.500.000');
+    return;
+  }
+  const now = new Date();
+  const timeStr = now.toTimeString().slice(0,8) + '.' + String(now.getMilliseconds()).padStart(3,'0');
+  const dateStr = now.toLocaleDateString('id-ID');
+  const rp = 'Rp ' + val.toLocaleString('id-ID');
+  const peserta = 'Peserta_' + (bidCounter++);
+
+  document.getElementById('highestBid').textContent = rp;
+  document.getElementById('highestBidder').textContent = peserta;
+  document.getElementById('receiptAmount').textContent = rp;
+  document.getElementById('receiptTime').textContent = dateStr + ' ' + timeStr;
+  document.getElementById('serverClock').innerHTML = timeStr + ' <span class="synced">✅ Tersinkronisasi</span>';
+
+  // mark previous top as losing
+  const hist = document.getElementById('bidHistory');
+  const prevTop = hist.querySelector('.bid-history-row.top');
+  if(prevTop){
+    prevTop.classList.remove('top');
+    prevTop.querySelector('span:last-child').innerHTML = prevTop.querySelector('span:last-child').textContent.split('Tertinggi')[0] + ' <span class="lose">Kalah</span>';
+  }
+  const row = document.createElement('div');
+  row.className = 'bid-history-row top';
+  row.innerHTML = `<span>${timeStr} · ${peserta}</span><span><b>${rp}</b> <span class="win">Tertinggi</span></span>`;
+  hist.prepend(row);
+
+  const log = document.getElementById('activityLog');
+  const logRow = document.createElement('div');
+  logRow.className = 'log-row';
+  logRow.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-badge">BID_SUBMITTED</span><span>${peserta} — ${rp}</span>`;
+  log.prepend(logRow);
+
+  document.getElementById('bidInput').value = Number(val + 250000).toLocaleString('id-ID');
+  document.querySelector('.bid-hint').textContent = 'Minimal Rp ' + (val + 250000).toLocaleString('id-ID');
+
+  toast('Penawaran ' + rp + ' berhasil diajukan dan tercatat di server');
+}
+
+/* countdown timer simulation */
+let secondsLeft = 2*60+25;
+setInterval(()=>{
+  if(secondsLeft <= 0) return;
+  secondsLeft--;
+  const m = String(Math.floor(secondsLeft/60)).padStart(2,'0');
+  const s = String(secondsLeft%60).padStart(2,'0');
+  const el = document.getElementById('countdown');
+  if(el) el.textContent = '00:' + m + ':' + s;
+}, 1000);
+
+/* ---------- page 3: rekonsiliasi ---------- */
+function reProses(){
+  toast('Memproses ulang rekonsiliasi seluruh kanal…');
+  setTimeout(()=>toast('Rekonsiliasi selesai diproses (simulasi)'), 1400);
+}
+</script>
+</body>
+</html>
